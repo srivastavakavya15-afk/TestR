@@ -1,0 +1,18 @@
+# Keeps the build context small and stops host build output leaking into the image.
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/.vs
+**/.git
+**/*.user
+**/data
+**/*.db
+**/*.db-shm
+**/*.db-wal
+.env
+**/.env*.local
+
+**/test-results
+**/playwright-report
+**/.playwright

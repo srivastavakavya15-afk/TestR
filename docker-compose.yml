@@ -1,0 +1,40 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      # Development turns on Swagger UI at /swagger. Set to Production to switch it off.
+      ASPNETCORE_ENVIRONMENT: Development
+      # Set explicitly because appsettings.Development.json points at a project-relative path;
+      # an environment variable outranks it.
+      ConnectionStrings__Default: Data Source=/data/app.db
+      # Bonus auth. Flip Enabled to true and fill in your OIDC issuer to require bearer tokens on
+      # writes — see README.md ("Authentication").
+      Auth__Enabled: "${AUTH_ENABLED:-false}"
+      Auth__Authority: "${OIDC_AUTHORITY:-}"
+      Auth__Audience: "${OIDC_AUDIENCE:-}"
+    volumes:
+      - api-data:/data
+    ports:
+      # Exposed so you can hit Swagger directly; the SPA reaches the API through nginx, not this port.
+      - "5099:8080"
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_AUTH_ENABLED: "${AUTH_ENABLED:-false}"
+        VITE_OIDC_AUTHORITY: "${OIDC_AUTHORITY:-}"
+        VITE_OIDC_CLIENT_ID: "${OIDC_CLIENT_ID:-}"
+        VITE_OIDC_SCOPE: "${OIDC_SCOPE:-openid profile email}"
+        VITE_OIDC_AUDIENCE: "${OIDC_AUDIENCE:-}"
+    ports:
+      - "5173:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  api-data:

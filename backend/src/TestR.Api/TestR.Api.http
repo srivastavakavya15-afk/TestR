@@ -1,0 +1,67 @@
+@host = http://localhost:5099
+
+### Health
+GET {{host}}/health
+
+### List all users (public)
+# @name list
+GET {{host}}/api/users
+
+### Create a user — 201
+# @name create
+POST {{host}}/api/users
+Content-Type: application/json
+
+{
+  "name": "Ada Lovelace",
+  "age": 36,
+  "city": "London",
+  "state": "Greater London",
+  "pincode": "WC1E"
+}
+
+### Create with every field invalid — 400 with a per-field `errors` dictionary
+POST {{host}}/api/users
+Content-Type: application/json
+
+{
+  "name": "A",
+  "age": 999,
+  "city": "",
+  "state": "",
+  "pincode": "1"
+}
+
+### Get one by id (public)
+GET {{host}}/api/users/{{create.response.body.id}}
+
+### Get an unknown id — 404
+GET {{host}}/api/users/00000000-0000-0000-0000-000000000000
+
+### Replace a user
+PUT {{host}}/api/users/{{create.response.body.id}}
+Content-Type: application/json
+
+{
+  "name": "Grace Hopper",
+  "age": 45,
+  "city": "Arlington",
+  "state": "VA",
+  "pincode": "22201"
+}
+
+### Delete a user — 204, then 404 on a repeat
+DELETE {{host}}/api/users/{{create.response.body.id}}
+
+### With Auth:Enabled=true, writes need a bearer token (reads stay public)
+POST {{host}}/api/users
+Content-Type: application/json
+Authorization: Bearer <paste-an-access-token>
+
+{
+  "name": "Katherine Johnson",
+  "age": 40,
+  "city": "Hampton",
+  "state": "VA",
+  "pincode": "23666"
+}
