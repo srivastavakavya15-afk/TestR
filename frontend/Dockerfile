@@ -1,14 +1,11 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# npm ci needs both files and reuses this layer until the lockfile changes.
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 
 COPY frontend/ ./
 
-# Baked into the bundle at build time. Left empty so the app calls /api on its own origin and nginx
-# proxies it to the API container — see nginx.conf.
 ARG VITE_AUTH_ENABLED=false
 ARG VITE_OIDC_AUTHORITY=""
 ARG VITE_OIDC_CLIENT_ID=""
