@@ -238,27 +238,3 @@ dotnet run --project backend/src/TestR.Api   # in another terminal
 cd frontend && npm run gen:api && npm run typecheck
 ```
 
-The generated output is committed so CI and fresh checkouts type-check without booting the API.
-
-## Notes and trade-offs
-
-- **Swashbuckle rather than the built-in `AddOpenApi`** — `Microsoft.AspNetCore.OpenApi`'s
-  `MapOpenApi` arrived in .NET 9; this project targets .NET 8, where Swashbuckle is the standard
-  choice. Two options are set explicitly (`SupportNonNullableReferenceTypes` plus a schema filter
-  marking non-nullable properties `required`) because without them every field is emitted as
-  optional and nullable, and the generated TypeScript would force null checks on fields the API
-  always sends.
-- **`CreatedAtUtc` is `DateTime`, not `DateTimeOffset`** — SQLite cannot `ORDER BY` a
-  `DateTimeOffset`, and an always-UTC instant has no offset worth storing. A value converter forces
-  `DateTimeKind.Utc` on read, so the JSON carries its `Z` and browsers don't reinterpret it as local
-  time.
-- **UUIDv7 primary keys** — sequential GUIDs index far better than random ones. `Guid.CreateVersion7()`
-  is .NET 9+, so `SequentialGuid` implements it; delete that type if the target framework is raised.
-- **The API client resolves `globalThis.fetch` per call** rather than letting `openapi-fetch` capture
-  it at construction. Binding it once breaks anything that patches `fetch` later — MSW in tests, and
-  tracing or polyfill layers in the browser.
-- **The API container runs as root** so it can write to the mounted `/data` volume without a
-  `chown` step. Fine for local development; a deployed image should run as a non-root user with the
-  volume's ownership set to match.
-- **Update and delete have no UI.** They are specified as API endpoints only, and are covered by
-  integration tests; the SPA's required surface is List and Add.
